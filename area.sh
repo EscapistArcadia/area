@@ -33,4 +33,4 @@ done
 
 # set -x
 
-yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILE/*.v; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" | tee $OUTPUT_FILE
+yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILE/*.v; read_verilog $VERILOG_FILE/*/*.v; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" | tee $OUTPUT_FILE
