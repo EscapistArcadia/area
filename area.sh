@@ -47,6 +47,8 @@ done
 
 # set -x
 
+VERILOG_FILES=$(find "$VERILOG_ROOT" -type f -name "*.v" | tr '\n' ' ')
+
 YOSYS_DIR=$(realpath "./yosys")
 YOSOS=$YOSYS_DIR/yosys
 if [[ ! -d "$YOSYS_DIR" ]]; then
@@ -55,7 +57,7 @@ if [[ ! -d "$YOSYS_DIR" ]]; then
 fi
 
 if [ $DRY_RUN -eq 1 ]; then
-    echo "$YOSYS_DIR/yosys -p \"read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_ROOT/*.v; read_verilog $VERILOG_ROOT/*/*.v; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE\""
+    echo "$YOSYS_DIR/yosys -p \"read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE\""
     exit 0
 fi
 
@@ -72,15 +74,15 @@ fi
 echo "Running Yosys ..."
 if [[ $VERBOSE -eq 1 ]]; then
     if [ -z "$OUTPUT_FILE" ]; then
-        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_ROOT/*.v; read_verilog $VERILOG_ROOT/*/*.v; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE"
+        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE"
     else
-        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_ROOT/*.v; read_verilog $VERILOG_ROOT/*/*.v; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" | tee $OUTPUT_FILE
+        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" | tee $OUTPUT_FILE
     fi
 else
     if [ -z "$OUTPUT_FILE" ]; then
-        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_ROOT/*.v; read_verilog $VERILOG_ROOT/*/*.v; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" > /dev/null
+        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" > /dev/null
     else
-        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_ROOT/*.v; read_verilog $VERILOG_ROOT/*/*.v; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" > $OUTPUT_FILE
+        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" > $OUTPUT_FILE
     fi
 fi
    
