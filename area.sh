@@ -61,7 +61,7 @@ YOSOS=$YOSYS_DIR/yosys
 
 if [ $DRY_RUN -eq 1 ]; then
     if [[ $MODE == "asic" ]]; then
-        echo "$YOSOS -p \"read_liberty -lib $LIBERTIES_FILES; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap $LIBERTIES_FILES_WITH_LABEL; abc $LIBERTIES_FILES_WITH_LABEL; stat $LIBERTIES_FILES_WITH_LABEL\""
+        echo "$YOSOS -p \"read_liberty -lib $LIBERTIES_FILES; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap $LIBERTIES_FILES_WITH_LABEL; abc $LIBERTIES_FILES_WITH_LABEL; check; stat $LIBERTIES_FILES_WITH_LABEL\""
     elif [[ $MODE == "fpga" ]]; then
         echo "$YOSOS -p \"read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth_xilinx -top $TOP_MODULE -family xcup; stat\""
     fi
@@ -85,7 +85,7 @@ fi
 
 # echo "Running Yosys ..."
 if [[ $MODE == "asic" ]]; then
-    YOSYS_COMMAND="$YOSOS -p \"read_liberty -lib $LIBERTIES_FILES; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap $LIBERTIES_FILES_WITH_LABEL; abc $LIBERTIES_FILES_WITH_LABEL; stat $LIBERTIES_FILES_WITH_LABEL\""
+    YOSYS_COMMAND="$YOSOS -p \"read_liberty -lib $LIBERTIES_FILES; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap $LIBERTIES_FILES_WITH_LABEL; abc $LIBERTIES_FILES_WITH_LABEL; check; stat $LIBERTIES_FILES_WITH_LABEL\""
 elif [[ $MODE == "fpga" ]]; then
     YOSYS_COMMAND="$YOSOS -p \"read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth_xilinx -top $TOP_MODULE -family xcup; stat\""
 else
