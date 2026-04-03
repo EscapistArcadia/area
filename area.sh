@@ -10,6 +10,7 @@ VERILOG_ROOT=$(realpath "./rtl")
 VERBOSE=0
 OUTPUT_FILE=""
 DRY_RUN=0
+MODE=""
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
@@ -38,6 +39,10 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=1
             shift
             ;;
+        -m|--mode)
+            MODE="$2"
+            shift 2
+            ;;
         *)
             echo "Unknown option: $key"
             exit 1
@@ -48,17 +53,24 @@ done
 # set -x
 
 VERILOG_FILES=$(find "$VERILOG_ROOT" -type f -name "*.v" | tr '\n' ' ')
+LIBERTIES_FILES="$LIBRARY_FILE $(find "$PWD/sram" -type f -name "*.lib" | tr '\n' ' ')"
+LIBERTIES_FILES_WITH_LABEL="-liberty $LIBRARY_FILE $(find "$PWD/sram" -type f -name "*.lib" | sed 's/^/-liberty /' | tr '\n' ' ')"
 
 YOSYS_DIR=$(realpath "./yosys")
 YOSOS=$YOSYS_DIR/yosys
-if [[ ! -d "$YOSYS_DIR" ]]; then
-    echo "Error: Yosys directory not found at $YOSYS_DIR"
-    exit 1
-fi
 
 if [ $DRY_RUN -eq 1 ]; then
-    echo "$YOSYS_DIR/yosys -p \"read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE\""
+    if [[ $MODE == "asic" ]]; then
+        echo "$YOSOS -p \"read_liberty -lib $LIBERTIES_FILES; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap $LIBERTIES_FILES_WITH_LABEL; abc $LIBERTIES_FILES_WITH_LABEL; stat $LIBERTIES_FILES_WITH_LABEL\""
+    elif [[ $MODE == "fpga" ]]; then
+        echo "$YOSOS -p \"read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth_xilinx -top $TOP_MODULE -family xcup; stat\""
+    fi
     exit 0
+fi
+
+if [[ ! -d "$YOSYS_DIR" ]]; then
+    echo "Yosys directory not found at $YOSYS_DIR"
+    git submodule update --init --recursive --progress
 fi
 
 if [[ ! -f "$YOSOS" ]]; then
@@ -72,18 +84,25 @@ if [[ ! -f "$YOSOS" ]]; then
 fi
 
 # echo "Running Yosys ..."
+if [[ $MODE == "asic" ]]; then
+    YOSYS_COMMAND="$YOSOS -p \"read_liberty -lib $LIBERTIES_FILES; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap $LIBERTIES_FILES_WITH_LABEL; abc $LIBERTIES_FILES_WITH_LABEL; stat $LIBERTIES_FILES_WITH_LABEL\""
+elif [[ $MODE == "fpga" ]]; then
+    YOSYS_COMMAND="$YOSOS -p \"read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth_xilinx -top $TOP_MODULE -family xcup; stat\""
+else
+    echo "Unknown mode: $MODE. Use --mode asic or --mode fpga."
+    exit 1
+fi
+
 if [[ $VERBOSE -eq 1 ]]; then
     if [ -z "$OUTPUT_FILE" ]; then
-        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE"
+        eval $YOSYS_COMMAND
     else
-        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" | tee $OUTPUT_FILE
+        eval $YOSYS_COMMAND | tee $OUTPUT_FILE
     fi
 else
     if [ -z "$OUTPUT_FILE" ]; then
-        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" > /dev/null
+        eval $YOSYS_COMMAND > /dev/null
     else
-        $YOSYS_DIR/yosys -p "read_liberty -lib $LIBRARY_FILE; read_verilog $VERILOG_FILES; hierarchy -check -top $TOP_MODULE; synth -top $TOP_MODULE; dfflibmap -liberty $LIBRARY_FILE; abc -liberty $LIBRARY_FILE; stat -liberty $LIBRARY_FILE" > $OUTPUT_FILE
+        eval $YOSYS_COMMAND > $OUTPUT_FILE
     fi
 fi
-   
-
